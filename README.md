@@ -16,4 +16,4 @@ CircleHeight,
 ```
 
 
-![Preview](https://github.com/LODSX/slidebar/blob/main/preview_slidebar.png)
+![Preview](https://github.com/Kidzonio/SlideBar/blob/main/slidebar.png)
