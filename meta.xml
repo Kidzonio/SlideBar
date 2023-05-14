@@ -1,4 +1,3 @@
 <meta>
-    <script src = 'others.lua' type = 'client' cache = 'false' />
     <script src = 'slidebar.lua' type = 'client' cache = 'false' />
 </meta>
