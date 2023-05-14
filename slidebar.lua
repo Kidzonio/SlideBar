@@ -10,12 +10,6 @@ circle = svgCreate(15, 15, [[
     </svg>
 ]])
 
-backGround = svgCreate(366, 9, [[
-    <svg width="366" height="9">
-        <rect width="366" height="9" rx="4.5" fill="white"/>
-    </svg>
-]])
-
 local slideBars = {};
 
 function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, circleW, circleH, colors)
@@ -50,9 +44,9 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
     local slide = slideBars[id];
     local progress_slide = interpolateBetween(0, 0, 0, slide.progress, 0, 0, (getTickCount() - slide.tick) / 550, 'Linear');
     
-    dxDrawImage(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, backGround, 0, 0, 0, slide.assets.backGround);
+    dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
     
-    dxDrawImageSection(slide.backGroundX, slide.backGroundY, progress_slide, slide.backGroundH, 0, 0, progress_slide, slide.backGroundH, backGround, 0, 0, 0, slide.assets.circle);
+    dxDrawRectangle(slide.backGroundX, slide.backGroundY, progress_slide, slide.backGroundH, slide.assets.circle);
     
     dxDrawImage((slide.circleX + 1*scale), slide.circleY - pi / 2, slide.circleW, slide.circleH, circle, 0, 0, 0, slide.assets.circle);
     
@@ -119,7 +113,9 @@ function eventsSlideBar (...)
 end
 addEventHandler('onClientClick', root, eventsSlideBar);
 
+
 ------- Example
+
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
@@ -157,37 +153,4 @@ function isCursorInPosition(x, y, w, h)
 	local cursor = Vector2((cursor.x * screen.x), (cursor.y * screen.y));
 	
 	return ((cursor.x >= x and cursor.x <= x + w) and (cursor.y >= y and cursor.y <= y + h));
-end
-
-local svgRectangles = {};
-
-function dxDrawSvgRectangle(x, y, w, h, radius, ...)
-    if (not svgRectangles[w]) then
-        svgRectangles[w] = {}
-    end
-
-    if (not svgRectangles[w][h]) then
-        svgRectangles[w][h] = {}
-    end
-
-    if (not svgRectangles[w][h][radius]) then
-        local raw = format([[
-            <svg width='%s' height='%s' fill='none'>
-                <mask id='path_inside' fill='white' >
-                    <rect width='%s' height='%s' rx='%s' />
-                </mask>
-                <rect width='%s' height='%s' rx='%s' fill='white' mask='url(#path_inside)'/>
-            </svg>
-        ]], w, h, w, h, radius, w, h, radius)
-        svgRectangles[w][h][radius] = svgCreate(w, h, raw, function(e)
-            if (not e or not isElement(e)) then 
-                return
-            end
-            dxSetTextureEdge(e, 'border')
-        end)
-    end
-
-    if (svgRectangles[w][h][radius]) then
-        DrawImage(x, y, w, h, svgRectangles[w][h][radius], ...)
-    end
 end
