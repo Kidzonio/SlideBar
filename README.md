@@ -8,12 +8,10 @@ createSlideBar('Identificator',
   PositionBackGroundY, 
   BackGroundWidth, 
   BackGroundHeight, 
-  PositionCircleX, 
-  PositionCircleY, 
   CircleWidth, 
   CircleHeight, 
   {
-  backGround = {R, G, B, A}; 
-  circle = {R, G, B, A};
+  backGround = tocolor(R, G, B, A), 
+  circle = tocolor(R, G, B, A)
   })
 ```
