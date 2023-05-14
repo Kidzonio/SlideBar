@@ -119,9 +119,7 @@ function eventsSlideBar (...)
 end
 addEventHandler('onClientClick', root, eventsSlideBar);
 
-
 ------- Example
-
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
