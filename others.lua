@@ -2,6 +2,7 @@ screen = Vector2(guiGetScreenSize());
 scale = math.min(math.max (0.5, (screen.y / 1080)), 2);
 parent = Vector2((screen.x - (409 * scale)) / 2, (screen.y - (370 * scale)) / 2);
 parentWidth, parentHeight = 409*scale, 370*scale;
+ceil, min, max, pi = math.ceil, math.min, math.max, math.pi;
 
 _getCursorPosition = getCursorPosition
 function getCursorPosition()
@@ -31,18 +32,6 @@ function isCursorInPosition(x, y, w, h)
 	
 	return ((cursor.x >= x and cursor.x <= x + w) and (cursor.y >= y and cursor.y <= y + h));
 end
-
-circle = svgCreate(15, 15, [[
-    <svg width="15" height="15">
-        <circle cx="7.5" cy="7.5" r="7.5" fill="white"/>
-    </svg>
-]])
-
-backGround = svgCreate(366, 9, [[
-    <svg width="366" height="9">
-        <rect width="366" height="9" rx="4.5" fill="white"/>
-    </svg>
-]])
 
 local svgRectangles = {};
 
