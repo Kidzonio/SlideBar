@@ -25,42 +25,49 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
 
     if not (slideBars[id]) then
         slideBars[id] = {
-            backGroundX = backGroundX;
-            backGroundY = backGroundY;
-            backGroundW = backGroundW;
-            backGroundH = backGroundH;
-            circleX = backGroundX - circleW / 2;
-            circleY = backGroundY;
-            circleW = circleW;
-            circleH = circleH;
-            assets = colors;
-            state = false;
-            tick = getTickCount();
-            progress = 0;
-            quantity = 0;
+            backGroundX = backGroundX,
+            backGroundY = backGroundY,
+            backGroundW = backGroundW,
+            backGroundH = backGroundH,
+            circleX = backGroundX - circleW / 2,
+            circleY = backGroundY,
+            circleW = circleW,
+            circleH = circleH,
+            assets = colors,
+            state = false,
+            tick = getTickCount(),
+            progress = 0,
+            quantity = 0,
+            blocked = false,
+            showing = true
         };
     end
 
     local slide = slideBars[id];
     local progress_slide = interpolateBetween(0, 0, 0, slide.progress, 0, 0, (getTickCount() - slide.tick) / 550, 'Linear');
     
-    dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
-    
-    dxDrawRectangle(slide.backGroundX, slide.backGroundY, progress_slide, slide.backGroundH, slide.assets.circle);
-    
-    dxDrawImage((slide.circleX + 1*scale), slide.circleY - pi / 2, slide.circleW, slide.circleH, circle, 0, 0, 0, slide.assets.circle);
-    
-    if (slide.state) then
-        if (isCursorShowing()) then
-            local c = getCursorPosition();
-            if (c) and ((c.x >= slide.backGroundX - slide.circleW / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.circleW))) then
-                slide.circleX = c.x;
-                slide.progress = min(max(c.x - slide.backGroundX+slide.circleW / 4, 0), slide.backGroundW);
-                slide.quantity = ceil(1 + (slide.progress / slide.backGroundW * (100 + 2)));
+
+    if (slide.showing) then
+        dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
+        
+        dxDrawRectangle(slide.backGroundX, slide.backGroundY, progress_slide, slide.backGroundH, slide.assets.circle);
+        
+        dxDrawImage((slide.circleX + 1*scale), slide.circleY - pi / 2, slide.circleW, slide.circleH, circle, 0, 0, 0, slide.assets.circle);
+        
+        if (slide.state and not slide.blocked) then
+            if (isCursorShowing()) then
+                local c = getCursorPosition();
+                if (c) and ((c.x >= slide.backGroundX - slide.circleW / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.circleW))) then
+                    slide.circleX = c.x;
+                    slide.progress = min(max(c.x - slide.backGroundX+slide.circleW / 4, 0), slide.backGroundW);
+                    slide.quantity = ceil(1 + (slide.progress / slide.backGroundW * (100 + 2)));
+                end
             end
         end
     end
 end
+
+---- ! SlideBar Functions !
 
 function deleteSlideBar (id)
     if not (slideBars[id]) then
@@ -68,6 +75,12 @@ function deleteSlideBar (id)
     end
     slideBars[id] = nil;
     return true;
+end
+
+function deleteAllSlideBars()
+    for i in pairs(slideBars) do
+        slideBars[i] = nil;
+    end
 end
 
 function getAllSlideBars ()
@@ -84,6 +97,20 @@ function getSlideBarProgress (id)
     end
 end
 
+function setSlideBarBlocked(id, state)
+    if (slideBars[id]) then
+        slideBars[id].blocked = (state and state or not slideBars[id].blocked);
+    end
+end
+
+function setSlideBarShowing(id, state)
+    if (slideBars[id]) then
+        slideBars[id].showing = (state and state or not slideBars[id].showing);
+    end
+end
+
+---- Events SlideBar 
+
 function eventsSlideBar (...)
     if (getIndexTable(slideBars) == 0) then
         return false;
@@ -93,7 +120,7 @@ function eventsSlideBar (...)
         if (button == 'left' and state == 'down') then
             for id, values in pairs(slideBars) do
                 if (isCursorInPosition(values.circleX, values.circleY, values.circleW, values.circleH)) then
-                     if not (slideBars[id].state) then
+                     if not (slideBars[id].state and slideBars[id].blocked) then
                         slideBars[id].state = true;
                      end   
                 end
@@ -113,16 +140,14 @@ function eventsSlideBar (...)
 end
 addEventHandler('onClientClick', root, eventsSlideBar);
 
-
 ------- Example
-
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
     createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 15*scale, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(2, 156, 242, 255)});
+    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 369*scale, 9*scale, 15*scale, 15*scale, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(2, 156, 242, 255)});
     dxDrawText(getSlideBarProgress('Teste'), parent.x + parentWidth / 2, parent.y + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'left', 'top');
 end)
-
 
 -- Utils
 
