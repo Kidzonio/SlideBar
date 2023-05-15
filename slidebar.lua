@@ -46,7 +46,6 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
     local slide = slideBars[id];
     local progress_slide = interpolateBetween(0, 0, 0, slide.progress, 0, 0, (getTickCount() - slide.tick) / 550, 'Linear');
     
-
     if (slide.showing) then
         dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
         
