@@ -1,7 +1,5 @@
 screen = Vector2(guiGetScreenSize());
 scale = math.min(math.max (0.5, (screen.y / 1080)), 2);
-parent = Vector2((screen.x - (409 * scale)) / 2, (screen.y - (370 * scale)) / 2);
-parentWidth, parentHeight = 409*scale, 370*scale;
 ceil, min, max, pi = math.ceil, math.min, math.max, math.pi;
 
 circle = svgCreate(15, 15, [[
@@ -140,6 +138,9 @@ end
 addEventHandler('onClientClick', root, eventsSlideBar);
 
 ------- Example
+
+parent = Vector2((screen.x - (409 * scale)) / 2, (screen.y - (370 * scale)) / 2);
+parentWidth, parentHeight = 409*scale, 370*scale;
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
