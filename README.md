@@ -30,7 +30,7 @@ deleteSlideBar('Identificator');
 * #### Delete all SlideBars
 
 ```lua
-deleteAllSlideBars('Identificator');
+deleteAllSlideBars();
 ```
 
 * #### Get all SlideBars
