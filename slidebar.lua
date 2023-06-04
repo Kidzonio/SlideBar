@@ -10,7 +10,7 @@ circle = svgCreate(15, 15, [[
 
 local slideBars = {};
 
-function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, circleW, circleH, colors)
+function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, circleW, circleH, minValue, maxValue, colors)
     assert(type(id) == "string", "Bad argument @ createSlideBar at argument 1, expect string got "..type(id));
     assert(type(backGroundX) == "number", "Bad argument @ createSlideBar at argument 2, expect number got "..type(backGroundX));
     assert(type(backGroundY) == "number", "Bad argument @ createSlideBar at argument 3, expect number got "..type(backGroundY));
@@ -18,8 +18,10 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
     assert(type(backGroundH) == "number", "Bad argument @ createSlideBar at argument 5, expect number got "..type(backGroundH));
     assert(type(circleW) == "number", "Bad argument @ createSlideBar at argument 6, expect number got "..type(circleW));
     assert(type(circleH) == "number", "Bad argument @ createSlideBar at argument 7, expect number got "..type(circleH));
-    assert(type(colors) == "table", "Bad argument @ createSlideBar at argument 8, expect table got "..type(colors));
-    assert(colors.backGround or colors.circle or colors.progress, "Bad argument @ createSlideBar at argument 8, expected {backGround = {}; circle = {};}");
+    assert(type(minValue) == "number", "Bad argument @ createSlideBar at argument 8, expect number got "..type(minValue));
+    assert(type(maxValue) == "number", "Bad argument @ createSlideBar at argument 9, expect number got "..type(maxValue));
+    assert(type(colors) == "table", "Bad argument @ createSlideBar at argument 10, expect table got "..type(colors));
+    assert(colors.backGround or colors.circle or colors.progress, "Bad argument @ createSlideBar at argument 10, expected {backGround = {}; circle = {};}");
 
     if not (slideBars[id]) then
         slideBars[id] = {
@@ -31,6 +33,8 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
             circleY = backGroundY,
             circleW = circleW,
             circleH = circleH,
+            minValue = minValue,
+            maxValue = maxValue,
             assets = colors,
             state = false,
             tick = getTickCount(),
@@ -57,7 +61,7 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
                 if (c) and ((c.x >= slide.backGroundX - slide.circleW / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.circleW))) then
                     slide.circleX = c.x;
                     slide.progress = min(max(c.x - slide.backGroundX+slide.circleW / 4, 0), slide.backGroundW);
-                    slide.quantity = ceil(1 + (slide.progress / slide.backGroundW * (100 + 2)));
+                    slide.quantity = ceil(slide.minValue + (slide.progress / slide.backGroundW * (slide.maxValue + (slide.maxValue / 50) + (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))); 
                 end
             end
         end
@@ -144,8 +148,8 @@ parentWidth, parentHeight = 409*scale, 370*scale;
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
-    createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 15*scale, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
-    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 369*scale, 9*scale, 15*scale, 15*scale, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
+    createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 15*scale, 0, 155, {backGround = tocolor(255, 255, 255, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
+    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 369*scale, 9*scale, 15*scale, 15*scale, 1, 200, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
     dxDrawText(getSlideBarProgress('Teste'), parent.x + parentWidth / 2, parent.y + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'left', 'top');
 end)
 
