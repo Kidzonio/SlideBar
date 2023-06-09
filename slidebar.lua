@@ -10,7 +10,12 @@ circle = svgCreate(15, 15, [[
 
 local slideBars = {};
 
-function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, radiusScale, minValue, maxValue, colors)
+-- Vertical orientation is not yet functional
+-- Vertical orientation is not yet functional
+-- Vertical orientation is not yet functional
+-- Vertical orientation is not yet functional
+
+function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, radiusScale, minValue, maxValue, orientation, colors)
     assert(type(id) == "string", "Bad argument @ createSlideBar at argument 1, expect string got "..type(id));
     assert(type(backGroundX) == "number", "Bad argument @ createSlideBar at argument 2, expect number got "..type(backGroundX));
     assert(type(backGroundY) == "number", "Bad argument @ createSlideBar at argument 3, expect number got "..type(backGroundY));
@@ -28,11 +33,12 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
             backGroundY = backGroundY,
             backGroundW = backGroundW,
             backGroundH = backGroundH,
-            circleX = backGroundX - radiusScale / 2,
-            circleY = backGroundY + ((backGroundH / 2) - (radiusScale / 2)),
+            circleX = (orientation == 'horizontal' and backGroundX - radiusScale / 2 or backGroundX + ((backGroundW / 2) - (radiusScale / 2))),
+            circleY = (orientation == 'horizontal' and backGroundY + ((backGroundH / 2) - (radiusScale / 2)) or backGroundY - radiusScale / 2),
             radiusScale = radiusScale,
             minValue = minValue,
             maxValue = maxValue,
+            orientation = orientation,
             assets = colors,
             state = false,
             tick = getTickCount(),
@@ -49,17 +55,33 @@ function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH,
     if (slide.showing) then
         dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
         
-        dxDrawRectangle(slide.backGroundX, slide.backGroundY, progress_slide, slide.backGroundH, slide.assets.progress);
+        dxDrawRectangle(slide.backGroundX, slide.backGroundY, (orientation == 'horizontal' and progress_slide or slide.backGroundW), (orientation == 'vertical' and progress_slide or slide.backGroundH), slide.assets.progress);
         
         dxDrawImage((slide.circleX + 1*scale), slide.circleY, slide.radiusScale, slide.radiusScale, circle, 0, 0, 0, slide.assets.circle);
-        
+
         if (slide.state and not slide.blocked) then
             if (isCursorShowing()) then
                 local c = getCursorPosition();
-                if (c) and ((c.x >= slide.backGroundX - slide.radiusScale / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.radiusScale))) then
-                    slide.circleX = c.x;
-                    slide.progress = min(max(c.x - slide.backGroundX + slide.radiusScale / 4, 0), slide.backGroundW);
-                    slide.quantity = ceil(slide.minValue + (slide.progress / slide.backGroundW * (slide.maxValue + (slide.maxValue / 50) + (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))); 
+                if (orientation == 'horizontal') then
+                    if (c) and ((c.x >= slide.backGroundX - slide.radiusScale / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.radiusScale))) then
+                        slide.circleX = c.x;
+                        slide.progress = min(max(c.x - slide.backGroundX + slide.radiusScale / 4, 0), slide.backGroundW);
+                        slide.quantity = ceil(
+                            slide.minValue + (slide.progress / slide.backGroundW * (slide.maxValue + (slide.maxValue / 50) + 
+                            (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + 
+                            (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))
+                        ); 
+                    end
+                else
+                    if (c) and ((c.y >= slide.backGroundY - slide.radiusScale / 2) and (c.y <= ((slide.backGroundY + slide.backGroundH) - slide.radiusScale / 2))) then
+                        slide.circleY = c.y;
+                        slide.progress = min(max(c.y - slide.backGroundY + slide.radiusScale / 4, 0), slide.backGroundH);
+                        slide.quantity = ceil(
+                            slide.minValue + (slide.progress / slide.backGroundH * (slide.maxValue + (slide.maxValue / 50) + 
+                            (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + 
+                            (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))
+                        ); 
+                    end
                 end
             end
         end
@@ -146,9 +168,10 @@ parentWidth, parentHeight = 409*scale, 370*scale;
 
 addEventHandler('onClientRender', root, function ()
     dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
-    createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 0, 155, {backGround = tocolor(255, 255, 255, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
-    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 369*scale, 9*scale, 15*scale, 1, 200, {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
+    createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 0, 155, 'horizontal', {backGround = tocolor(255, 255, 255, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
+    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 5*scale, 40*scale, 15*scale, 1, 100, 'vertical', {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
     dxDrawText(getSlideBarProgress('Teste'), parent.x + parentWidth / 2, parent.y + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'left', 'top');
+    dxDrawText(getSlideBarProgress('Teste2'), parent.x + parentWidth / 2, (parent.y + 50) + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'center', 'center');
 end)
 
 -- Utils
