@@ -1,206 +1,118 @@
-screen = Vector2(guiGetScreenSize());
-scale = math.min(math.max (0.5, (screen.y / 1080)), 2);
-ceil, min, max, pi = math.ceil, math.min, math.max, math.pi;
+local min, max, floor = math.min, math.max, math.floor;
 
-circle = svgCreate(15, 15, [[
-    <svg width="15" height="15">
-        <circle cx="7.5" cy="7.5" r="7.5" fill="white"/>
-    </svg>
-]])
+slidebar = {};
 
-local slideBars = {};
+function slidebar:Create (positions, colors, dataSlide)
+    assert (type(positions) == 'table', 'Syntax Error! "slidebar:Create" function expects "positions" argument to be a "table" value. got ' .. type(positions));
+    assert (type(colors) == 'table', 'Syntax Error! "slidebar:Create" function expects "colors" argument to be a "table" value. got ' .. type(colors));
+    assert (type(dataSlide) == 'table', 'Syntax Error! "slidebar:Create" function expects "dataSlide" argument to be a "table" value. got ' .. type(dataSlide));
 
--- Vertical orientation is not yet functional
--- Vertical orientation is not yet functional
--- Vertical orientation is not yet functional
--- Vertical orientation is not yet functional
+    local self = setmetatable ({}, {__index = slidebar});
 
-function createSlideBar (id, backGroundX, backGroundY, backGroundW, backGroundH, radiusScale, minValue, maxValue, orientation, colors)
-    assert(type(id) == "string", "Bad argument @ createSlideBar at argument 1, expect string got "..type(id));
-    assert(type(backGroundX) == "number", "Bad argument @ createSlideBar at argument 2, expect number got "..type(backGroundX));
-    assert(type(backGroundY) == "number", "Bad argument @ createSlideBar at argument 3, expect number got "..type(backGroundY));
-    assert(type(backGroundW) == "number", "Bad argument @ createSlideBar at argument 4, expect number got "..type(backGroundW));
-    assert(type(backGroundH) == "number", "Bad argument @ createSlideBar at argument 5, expect number got "..type(backGroundH));
-    assert(type(radiusScale) == "number", "Bad argument @ createSlideBar at argument 6, expect number got "..type(radiusScale));
-    assert(type(minValue) == "number", "Bad argument @ createSlideBar at argument 7, expect number got "..type(minValue));
-    assert(type(maxValue) == "number", "Bad argument @ createSlideBar at argument 8, expect number got "..type(maxValue));
-    assert(type(colors) == "table", "Bad argument @ createSlideBar at argument 9, expect table got "..type(colors));
-    assert(colors.backGround or colors.circle or colors.progress, "Bad argument @ createSlideBar at argument 9, expected {backGround = {}; circle = {};}");
 
-    if not (slideBars[id]) then
-        slideBars[id] = {
-            backGroundX = backGroundX,
-            backGroundY = backGroundY,
-            backGroundW = backGroundW,
-            backGroundH = backGroundH,
-            circleX = (orientation == 'horizontal' and backGroundX - radiusScale / 2 or backGroundX + ((backGroundW / 2) - (radiusScale / 2))),
-            circleY = (orientation == 'horizontal' and backGroundY + ((backGroundH / 2) - (radiusScale / 2)) or backGroundY - radiusScale / 2),
-            radiusScale = radiusScale,
-            minValue = minValue,
-            maxValue = maxValue,
-            orientation = orientation,
-            assets = colors,
-            state = false,
-            tick = getTickCount(),
-            progress = 0,
-            quantity = 0,
-            blocked = false,
-            showing = true
-        };
-    end
+    self.x = positions.x;
+    self.y = positions.y;
+    self.width = positions.w;
+    self.height = positions.h;
+    self.circle = {};
+    self.circle.x = positions.circle.x;
+    self.circle.y = positions.circle.y;
+    self.circle.w = positions.circle.w;
+    self.circle.h = positions.circle.h;
+    self.color = {};
+    self.color.background = colors.background;
+    self.color.progress = colors.progress;
+    self.color.circle = colors.circle;
+    self.state = false;
+    self.value = dataSlide.defaultValue;
+    self.minValue = dataSlide.minimum;
+    self.maxValue = dataSlide.maximum;
+    self.radius = dataSlide.radius;
 
-    local slide = slideBars[id];
-    local progress_slide = interpolateBetween(0, 0, 0, slide.progress, 0, 0, (getTickCount() - slide.tick) / 550, 'Linear');
+    self.circleSVG = svgCreate(positions.circle.w, positions.circle.h, [[
+        <svg width="]]..(positions.circle.w)..[[" height="]]..(positions.circle.h)..[[">
+        <circle cx="]]..(positions.circle.w/2)..[[" cy="]]..(positions.circle.h/2)..[[" r="]]..(positions.circle.w/2)..[[" fill="white"/>
+        </svg>
+    ]])
+
+    return self;
+end
+
+function slidebar:render ()
+    local progress = (self.value - self.minValue) / (self.maxValue - self.minValue);
+    local valueX = self.x + (progress * (self.width - self.circle.w));
     
-    if (slide.showing) then
-        dxDrawRectangle(slide.backGroundX, slide.backGroundY, slide.backGroundW, slide.backGroundH, slide.assets.backGround);
-        
-        dxDrawRectangle(slide.backGroundX, slide.backGroundY, (orientation == 'horizontal' and progress_slide or slide.backGroundW), (orientation == 'vertical' and progress_slide or slide.backGroundH), slide.assets.progress);
-        
-        dxDrawImage((slide.circleX + 1*scale), slide.circleY, slide.radiusScale, slide.radiusScale, circle, 0, 0, 0, slide.assets.circle);
+    dxDrawRectangle (self.x, self.y, self.width, self.height, self.color.background);
+    dxDrawRectangle (self.x, self.y, (self.width/1*progress), self.height, self.color.progress);
+    dxDrawImage(valueX, self.circle.y, self.circle.w, self.circle.h, self.circleSVG, 0, 0, 0, self.color.circle);
+end
 
-        if (slide.state and not slide.blocked) then
-            if (isCursorShowing()) then
-                local c = getCursorPosition();
-                if (orientation == 'horizontal') then
-                    if (c) and ((c.x >= slide.backGroundX - slide.radiusScale / 2) and (c.x <= ((slide.backGroundX + slide.backGroundW) - slide.radiusScale))) then
-                        slide.circleX = c.x;
-                        slide.progress = min(max(c.x - slide.backGroundX + slide.radiusScale / 4, 0), slide.backGroundW);
-                        slide.quantity = ceil(
-                            slide.minValue + (slide.progress / slide.backGroundW * (slide.maxValue + (slide.maxValue / 50) + 
-                            (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + 
-                            (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))
-                        ); 
-                    end
-                else
-                    if (c) and ((c.y >= slide.backGroundY - slide.radiusScale / 2) and (c.y <= ((slide.backGroundY + slide.backGroundH) - slide.radiusScale / 2))) then
-                        slide.circleY = c.y;
-                        slide.progress = min(max(c.y - slide.backGroundY + slide.radiusScale / 4, 0), slide.backGroundH);
-                        slide.quantity = ceil(
-                            slide.minValue + (slide.progress / slide.backGroundH * (slide.maxValue + (slide.maxValue / 50) + 
-                            (slide.minValue == 0 and (slide.maxValue > 99 and 1 or 0) or 0) + 
-                            (slide.maxValue ~= 100 and math.floor((slide.maxValue / 100)) or 0)))
-                        ); 
-                    end
-                end
-            end
+function slidebar:setValue (newValue)
+    self.value = min(max(newValue, self.minValue), self.maxValue);
+end
+
+function slidebar:getValue ()
+    return (floor(self.value));
+end
+
+function slidebar:click (button, state, absoluteX, absoluteY)
+    if (button == "left" and state == "down") then
+        local value = self.circle.x + ((self.value - self.minValue) / (self.maxValue - self.minValue)) * (self.width - self.circle.w)
+        if absoluteX >= value and absoluteX <= value + self.circle.w and absoluteY >= self.y and absoluteY <= self.y + self.circle.h then
+            self.state = true;
+            self.dgOffsetX = absoluteX - value;
         end
+    elseif (button == "left" and state == "up") then
+        self.state = false;
     end
 end
 
----- ! SlideBar Functions !
-
-function deleteSlideBar (id)
-    if not (slideBars[id]) then
-        return false;
-    end
-    slideBars[id] = nil;
-    return true;
-end
-
-function deleteAllSlideBars()
-    for i in pairs(slideBars) do
-        slideBars[i] = nil;
+function slidebar:mouseMove (absoluteX, absoluteY)
+    if (self.state) then
+        local value = absoluteX - self.dgOffsetX;
+        value = max(self.x, min(value, self.x + self.width - self.circle.w));
+        local progress = (value - self.x) / (self.width - self.circle.w);
+        self.value = self.minValue + progress * (self.maxValue - self.minValue);
     end
 end
 
-function getAllSlideBars ()
-    local sb = {};
-    for i, v in pairs(slideBars) do
-        table.insert(sb, #sb + 1, i);
-    end
-    return sb;
-end
+---- Example
 
-function getSlideBarProgress (id)
-    if (slideBars[id]) then
-        return slideBars[id].quantity;
-    end
-end
+local slide = slidebar:Create (
+    {
+        x = 815;
+        y = 543;
+        w = 285;
+        h = 5;
+        radius = 5;
+        circle = {
+            x = 813;
+            y = 540;
+            w = 12;
+            h = 12;
+        };
+    },
+    {
+        background = tocolor(30, 30, 30, 255),
+        progress = tocolor(147, 227, 84, 255),
+        circle = tocolor(255, 255, 255, 255),
+    },
+    {
+        minimum = 0,
+        maximum = 7,
+        defaultValue = 0,
+    }
+);
 
-function setSlideBarBlocked(id, state)
-    if (slideBars[id]) then
-        slideBars[id].blocked = (state and state or not slideBars[id].blocked);
-    end
-end
-
-function setSlideBarShowing(id, state)
-    if (slideBars[id]) then
-        slideBars[id].showing = (state and state or not slideBars[id].showing);
-    end
-end
-
----- Events SlideBar 
-
-function eventsSlideBar (...)
-    if (getIndexTable(slideBars) == 0) then
-        return false;
-    end
-    if (eventName == 'onClientClick') then
-        local button, state = arg[1], arg[2];
-        if (button == 'left' and state == 'down') then
-            for id, values in pairs(slideBars) do
-                if (isCursorInPosition(values.circleX, values.circleY, values.radiusScale, values.radiusScale)) then
-                     if not (slideBars[id].state and slideBars[id].blocked) then
-                        slideBars[id].state = true;
-                     end   
-                end
-            end
-            return true;
-        end
-        if (button == 'left' and state == 'up') then
-            for id in pairs(slideBars) do
-                if (slideBars[id].state) then
-                    slideBars[id].state = false;
-                end   
-            end
-            return true;
-        end
-        return true;
-    end
-end
-addEventHandler('onClientClick', root, eventsSlideBar);
-
-------- Example
-
-parent = Vector2((screen.x - (409 * scale)) / 2, (screen.y - (370 * scale)) / 2);
-parentWidth, parentHeight = 409*scale, 370*scale;
-
-addEventHandler('onClientRender', root, function ()
-    dxDrawRectangle(parent.x, parent.y, parentWidth, parentHeight, tocolor(53, 56, 70, 255));
-    createSlideBar('Teste', parent.x + 12*scale, parent.y + 120*scale, 369*scale, 9*scale, 15*scale, 0, 155, 'horizontal', {backGround = tocolor(255, 255, 255, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
-    createSlideBar('Teste2', parent.x + 12*scale, parent.y + 320*scale, 5*scale, 40*scale, 15*scale, 1, 100, 'vertical', {backGround = tocolor(58, 64, 83, 255), circle = tocolor(255, 255, 255, 255), progress = tocolor(2, 156, 242, 255)});
-    dxDrawText(getSlideBarProgress('Teste'), parent.x + parentWidth / 2, parent.y + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'left', 'top');
-    dxDrawText(getSlideBarProgress('Teste2'), parent.x + parentWidth / 2, (parent.y + 50) + parentHeight / 2, 366*scale, 9*scale, tocolor(255, 255, 255, 255), 1.0, 'default', 'center', 'center');
+addEventHandler ('onClientRender', root, function ()
+    slide:render();
+    dxDrawText (slide:getValue(), 300, 300, 300, 300);
 end)
 
--- Utils
+addEventHandler ('onClientClick', root, function (button, state, absoluteX, absoluteY)
+    slide:click (button, state, absoluteX, absoluteY);
+end)
 
-_getCursorPosition = getCursorPosition
-function getCursorPosition()
-    if (not isCursorShowing()) then
-		return false;
-	end
-	local cursor = Vector2(_getCursorPosition());
-	local cursor = Vector2((cursor.x * screen.x), (cursor.y * screen.y));
-	
-	return cursor;
-end
-
-function getIndexTable(table)
-    local count = 0;
-    for _, v in pairs(table) do
-        count = count + 1;
-    end
-    return count;
-end
-
-function isCursorInPosition(x, y, w, h)
-    if (not isCursorShowing()) then
-		return false;
-	end
-	local cursor = Vector2(_getCursorPosition());
-	local cursor = Vector2((cursor.x * screen.x), (cursor.y * screen.y));
-	
-	return ((cursor.x >= x and cursor.x <= x + w) and (cursor.y >= y and cursor.y <= y + h));
-end
+addEventHandler ('onClientCursorMove', root, function (_, _, absoluteX, absoluteY)
+    slide:mouseMove (absoluteX, absoluteY);
+end)
