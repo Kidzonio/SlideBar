@@ -48,6 +48,9 @@ function slidebar:render ()
 end
 
 function slidebar:setValue (newValue)
+    if not (newValue) then
+        return error ('Syntax Error! "slidebar:setValue" function expects "newValue" argument to be a "number" value. got ' .. type(newValue));
+    end
     self.value = min(max(newValue, self.minValue), self.maxValue);
 end
 
@@ -56,6 +59,16 @@ function slidebar:getValue ()
 end
 
 function slidebar:click (button, state, absoluteX, absoluteY)
+    if not (button) then
+        return error ('Syntax Error! "slidebar:click" function expects "button" argument to be a "string" value. got ' .. type(button));
+    elseif not (state) then
+        return error ('Syntax Error! "slidebar:click" function expects "state" argument to be a "string" value. got ' .. type(state));
+    elseif not (absoluteX) then
+        return error ('Syntax Error! "slidebar:click" function expects "absoluteX" argument to be a "number" value. got ' .. type(absoluteX));
+    elseif not (absoluteY) then
+        return error ('Syntax Error! "slidebar:click" function expects "absoluteY" argument to be a "number" value. got ' .. type(absoluteY));
+    end
+
     if (button == "left" and state == "down") then
         local value = self.circle.x + ((self.value - self.minValue) / (self.maxValue - self.minValue)) * (self.width - self.circle.w)
         if absoluteX >= value and absoluteX <= value + self.circle.w and absoluteY >= self.y and absoluteY <= self.y + self.circle.h then
@@ -68,6 +81,9 @@ function slidebar:click (button, state, absoluteX, absoluteY)
 end
 
 function slidebar:mouseMove (absoluteX, absoluteY)
+    if not (absoluteX) then
+        return error ('Syntax Error! "slidebar:mouseMove" function expects "absoluteX" argument to be a "number" value. got ' .. type(absoluteX));
+    end
     if (self.state) then
         local value = absoluteX - self.dgOffsetX;
         value = max(self.x, min(value, self.x + self.width - self.circle.w));
