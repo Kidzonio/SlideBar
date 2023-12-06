@@ -1,4 +1,6 @@
-local min, max, floor = math.min, math.max, math.floor;
+local min, max, floor, pi = math.min, math.max, math.floor, math.pi;
+
+local screen = Vector2 (guiGetScreenSize ());
 
 slidebar = {};
 
@@ -8,30 +10,28 @@ function slidebar:Create (positions, colors, dataSlide)
     assert (type(dataSlide) == 'table', 'Syntax Error! "slidebar:Create" function expects "dataSlide" argument to be a "table" value. got ' .. type(dataSlide));
 
     local self = setmetatable ({}, {__index = slidebar});
-
-
+    
+    self.circle = {};
+    self.color = {};
     self.x = positions.x;
     self.y = positions.y;
     self.width = positions.w;
     self.height = positions.h;
-    self.circle = {};
-    self.circle.x = positions.circle.x;
-    self.circle.y = positions.circle.y;
+    self.circle.x = positions.x - 2;
+    self.circle.y = positions.y - (positions.circle.h / pi);
     self.circle.w = positions.circle.w;
     self.circle.h = positions.circle.h;
-    self.color = {};
     self.color.background = colors.background;
     self.color.progress = colors.progress;
     self.color.circle = colors.circle;
-    self.state = false;
-    self.value = dataSlide.defaultValue;
+    self.value = dataSlide.defaultValue ~= dataSlide.minimum and dataSlide.minimum or dataSlide.defaultValue;
     self.minValue = dataSlide.minimum;
     self.maxValue = dataSlide.maximum;
-    self.radius = dataSlide.radius;
+    self.state = false;
 
     self.circleSVG = svgCreate(positions.circle.w, positions.circle.h, [[
-        <svg width="]]..(positions.circle.w)..[[" height="]]..(positions.circle.h)..[[">
-        <circle cx="]]..(positions.circle.w/2)..[[" cy="]]..(positions.circle.h/2)..[[" r="]]..(positions.circle.w/2)..[[" fill="white"/>
+        <svg width=']]..(positions.circle.w)..[[' height=']]..(positions.circle.h)..[['>
+        <circle cx=']]..(positions.circle.w/2)..[[' cy=']]..(positions.circle.h/2)..[[' r=']]..(positions.circle.w/2)..[[' fill='white'/>
         </svg>
     ]])
 
@@ -45,6 +45,16 @@ function slidebar:render ()
     dxDrawRectangle (self.x, self.y, self.width, self.height, self.color.background);
     dxDrawRectangle (self.x, self.y, (self.width/1*progress), self.height, self.color.progress);
     dxDrawImage(valueX, self.circle.y, self.circle.w, self.circle.h, self.circleSVG, 0, 0, 0, self.color.circle);
+
+    if (self.state) then
+        local cursor = getCursorPosition ();
+        local absoluteX = cursor * screen.x;
+        local value = absoluteX - (self.dgOffsetX or 0);
+        value = max(self.x, min (value, self.x + self.width - self.circle.w));
+        local _progress = (value - self.x) / (self.width - self.circle.w);
+        self.value = self.minValue + _progress * (self.maxValue - self.minValue);
+    end
+
 end
 
 function slidebar:setValue (newValue)
@@ -59,36 +69,23 @@ function slidebar:getValue ()
 end
 
 function slidebar:click (button, state, absoluteX, absoluteY)
-    if not (button) then
-        return error ('Syntax Error! "slidebar:click" function expects "button" argument to be a "string" value. got ' .. type(button));
-    elseif not (state) then
-        return error ('Syntax Error! "slidebar:click" function expects "state" argument to be a "string" value. got ' .. type(state));
-    elseif not (absoluteX) then
-        return error ('Syntax Error! "slidebar:click" function expects "absoluteX" argument to be a "number" value. got ' .. type(absoluteX));
-    elseif not (absoluteY) then
-        return error ('Syntax Error! "slidebar:click" function expects "absoluteY" argument to be a "number" value. got ' .. type(absoluteY));
-    end
-
-    if (button == "left" and state == "down") then
+    if (button == 'left' and state == 'down') then
         local value = self.circle.x + ((self.value - self.minValue) / (self.maxValue - self.minValue)) * (self.width - self.circle.w)
         if absoluteX >= value and absoluteX <= value + self.circle.w and absoluteY >= self.y and absoluteY <= self.y + self.circle.h then
-            self.state = true;
             self.dgOffsetX = absoluteX - value;
+            self.state = true;
+            return true;
         end
-    elseif (button == "left" and state == "up") then
+        if ((absoluteX > self.x and absoluteX < (self.x + self.width)) and (absoluteY > self.y and absoluteY < (self.y + self.height))) then
+            _value = max(self.x, min(absoluteX, self.x + self.width - self.circle.w));
+            local _progress = (_value - self.x) / (self.width - self.circle.w);
+            self.value = self.minValue + _progress * (self.maxValue - self.minValue);
+            self.state = true;
+            return true;
+        end
+    elseif (button == 'left' and state == 'up') then
         self.state = false;
-    end
-end
-
-function slidebar:mouseMove (absoluteX, absoluteY)
-    if not (absoluteX) then
-        return error ('Syntax Error! "slidebar:mouseMove" function expects "absoluteX" argument to be a "number" value. got ' .. type(absoluteX));
-    end
-    if (self.state) then
-        local value = absoluteX - self.dgOffsetX;
-        value = max(self.x, min(value, self.x + self.width - self.circle.w));
-        local progress = (value - self.x) / (self.width - self.circle.w);
-        self.value = self.minValue + progress * (self.maxValue - self.minValue);
+        return false;
     end
 end
 
@@ -100,10 +97,7 @@ local slide = slidebar:Create (
         y = 543;
         w = 285;
         h = 5;
-        radius = 5;
         circle = {
-            x = 813;
-            y = 540;
             w = 12;
             h = 12;
         };
@@ -122,13 +116,9 @@ local slide = slidebar:Create (
 
 addEventHandler ('onClientRender', root, function ()
     slide:render();
-    dxDrawText (slide:getValue(), 300, 300, 300, 300);
+    dxDrawText (slide:getValue(), 600, 300, 300, 300, tocolor (255, 255, 255, 255), 3);
 end)
 
 addEventHandler ('onClientClick', root, function (button, state, absoluteX, absoluteY)
     slide:click (button, state, absoluteX, absoluteY);
-end)
-
-addEventHandler ('onClientCursorMove', root, function (_, _, absoluteX, absoluteY)
-    slide:mouseMove (absoluteX, absoluteY);
 end)

@@ -1,3 +1,5 @@
 <meta>
+    <info author = 'Kidzonio' name = 'SlideBar' />
+
     <script src = 'slidebar.lua' type = 'client' cache = 'false' />
 </meta>
