@@ -1,3 +1,10 @@
+--[[
+    Info:
+    Author: Kidzonio
+    Github: https://github.com/Kidzonio
+    Discord: kidzonio
+]]
+
 local min, max, floor, pi = math.min, math.max, math.floor, math.pi;
 
 local screen = Vector2 (guiGetScreenSize ());
