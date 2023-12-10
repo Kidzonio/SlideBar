@@ -31,7 +31,7 @@ function slidebar:Create (positions, colors, dataSlide)
     self.color.background = colors.background;
     self.color.progress = colors.progress;
     self.color.circle = colors.circle;
-    self.value = dataSlide.defaultValue ~= dataSlide.minimum and dataSlide.minimum or dataSlide.defaultValue;
+    self.value = dataSlide.defaultValue;
     self.minValue = dataSlide.minimum;
     self.maxValue = dataSlide.maximum;
     self.state = false;
